@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактор кода Python | Adele Labs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://skulpt.org/js/skulpt.min.js"></script>
+    <script src="https://skulpt.org/js/skulpt-stdlib.js"></script> 
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Roboto+Mono:wght@400;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        #python-code-input {
+            font-family: 'Roboto Mono', monospace;
+            tab-size: 4;
+            caret-color: #10b981;
+        }
+        #output-area {
+            font-family: 'Roboto Mono', monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .text-error { color: #ef4444; }
+        .text-success { color: #10b981; }
+        
+        /* --- СТИЛИ МОДАЛЬНОГО ОКНА --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Выше чем все */
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#1f2937',
+                        'brand-primary': '#04412B',
+                        'brand-light': '#EDFAEC',
+                        'cta-accent': '#04412B',
+                        'brand-hover': '#1A6348',
+                        'success': '#10b981',
+                        'error': '#ef4444',
+                        // Новый цвет для кнопки AI
+                        'ai-btn': '#8b5cf6', // Фиолетовый
+                        'ai-btn-hover': '#7c3aed',
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-primary-dark">
+
+    <header class="sticky top-0 z-50 bg-white shadow-md">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+            <a href="index.html" class="flex-shrink-0 text-2xl font-extrabold flex items-center">
+                <img src="logo.svg" alt="Логотип Adele Labs" class="h-8"> 
+            </a>
+            
+            <div class="flex items-center space-x-4">
+                <button id="ai-btn" onclick="openAiModal()" class="bg-ai-btn text-white font-semibold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg shadow-lg hover:bg-ai-btn-hover transition duration-200 flex items-center space-x-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M16 12h-1m.707 6.364l-.707-.707M9 12H4m1.636 6.364l.707-.707M12 21v-1m-4.636-1.636l-.707.707M4 12h1m-.707-6.364l.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="hidden sm:inline">AI Помощник</span>
+                </button>
+
+                
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+        <div class="bg-white shadow-2xl rounded-xl p-4 sm:p-6 mb-8 border border-gray-100">
+            
+            <h2 class="text-xl font-bold mb-4 text-primary-dark">📝 Ваш Python код</h2>
+
+            <textarea id="python-code-input" rows="15" class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none resize-none bg-gray-50 text-gray-800 text-sm" placeholder="Введите ваш Python код здесь...">
+# Нажмите 'Запустить код', чтобы увидеть результат
+print("Hello, Adele Labs!")
+
+def greet(name):
+    return f"Привет, {name}!"
+
+print(greet("Мир"))
+</textarea>
+            
+            <div class="mt-4 flex justify-end">
+                <button id="run-python-code-btn" class="bg-cta-accent text-white px-6 py-2 rounded-lg font-bold transition duration-300 shadow-md hover:bg-brand-hover flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.878v4.244a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Запустить код
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 text-white shadow-2xl rounded-xl p-4 sm:p-6">
+            <h2 class="text-xl font-bold mb-4 flex items-center text-success">
+                <span id="output-icon">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </span>
+                <span id="output-title">Вывод консоли</span>
+            </h2>
+            
+            <pre id="output-area" class="text-sm bg-gray-900 p-3 rounded-lg"></pre>
+
+            <p id="status-message" class="mt-4 text-sm text-gray-400">Нажмите "Запустить код", чтобы увидеть результат.</p>
+        </div>
+
+    </main>
+
+    <div id="ai-modal" class="modal hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-11/12 p-6 md:p-8">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+                    <svg class="w-6 h-6 text-ai-btn" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M16 12h-1m.707 6.364l-.707-.707M9 12H4m1.636 6.364l.707-.707M12 21v-1m-4.636-1.636l-.707.707M4 12h1m-.707-6.364l.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>AI Помощник для Кода</span>
+                </h3>
+                <button onclick="closeAiModal()" class="text-gray-500 hover:text-gray-900 transition duration-150">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <p class="mb-6 text-gray-600">
+                Используйте эти сторонние нейросети для генерации, оптимизации или исправления кода. 
+            </p>
+
+            <ul class="space-y-3">
+                <li>
+                    <a href="https://chat.qwen.ai/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>Qwen (Alibaba)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.deepseek.com/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>DeepSeek</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://giga.chat/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>GigaChat (Сбер)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://alice.yandex.ru/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>Алиса (Яндекс)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        // --- НОВЫЙ КОД ДЛЯ AI-МОДАЛА ---
+        const aiModal = document.getElementById('ai-modal'); 
+
+        function openAiModal() {
+            aiModal.classList.remove('hidden');
+        }
+
+        function closeAiModal() {
+            aiModal.classList.add('hidden');
+        }
+        // --- КОНЕЦ НОВОГО КОДА ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const codeInput = document.getElementById('python-code-input');
+            const runButton = document.getElementById('run-python-code-btn');
+            const outputArea = document.getElementById('output-area');
+            const statusMessage = document.getElementById('status-message');
+            const outputTitle = document.getElementById('output-title');
+            const outputIcon = document.getElementById('output-icon');
+            
+            let currentOutput = '';
+            
+            // 2. Функция, перехватывающая вывод (stdout) Skulpt
+            function outf(text) {
+                currentOutput += text;
+            }
+
+            // 3. Функция для выполнения кода
+            async function runCode() {
+                const code = codeInput.value;
+                currentOutput = '';
+                outputArea.textContent = ''; 
+                
+                statusMessage.textContent = 'Выполнение кода...';
+                statusMessage.classList.remove('text-error', 'text-success', 'text-gray-400');
+                statusMessage.classList.add('text-yellow-500');
+                
+                runButton.disabled = true;
+                runButton.classList.add('opacity-50', 'cursor-not-allowed');
+                runButton.classList.remove('hover:bg-brand-hover');
+
+                try {
+                    // Конфигурация Skulpt
+                    Sk.configure({
+                        output: outf, // Функция для перехвата вывода
+                        read: builtinRead, // Функция для загрузки стандартной библиотеки
+                        // Включаем поддержку асинхронности
+                        __future__: Sk.python3
+                    });
+                    
+                    // Выполнение кода: Sk.misceval.asyncToPromise оборачивает асинхронное выполнение
+                    await Sk.misceval.asyncToPromise(function() {
+                        return Sk.importMainWithBody("<stdin>", false, code, true);
+                    });
+
+                    // Установка вывода
+                    outputArea.textContent = currentOutput.trim();
+                    outputTitle.textContent = 'Вывод консоли';
+                    outputIcon.innerHTML = `<svg class="w-6 h-6 mr-2 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
+                    
+                    statusMessage.textContent = 'Код выполнен успешно.';
+                    statusMessage.classList.remove('text-yellow-500', 'text-error');
+                    statusMessage.classList.add('text-success');
+
+                } catch (err) {
+                    // Установка вывода ошибки
+                    outputArea.textContent = err.toString();
+                    
+                    // Установка статуса ошибки
+                    outputTitle.textContent = 'Ошибка выполнения';
+                    outputIcon.innerHTML = `<svg class="w-6 h-6 mr-2 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                    
+                    statusMessage.textContent = 'Произошла ошибка при выполнении кода.';
+                    statusMessage.classList.remove('text-yellow-500', 'text-success');
+                    statusMessage.classList.add('text-error');
+
+                } finally {
+                    runButton.disabled = false;
+                    runButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    runButton.classList.add('hover:bg-brand-hover');
+                }
+            }
+
+            // 4. Функция для загрузки стандартной библиотеки Skulpt (обязательна)
+            function builtinRead(x) {
+                if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                    throw "File not found: '" + x + "'";
+                return Sk.builtinFiles["files"][x];
+            }
+
+            // 5. Запуск слушателя событий
+            runButton.addEventListener('click', runCode);
+            statusMessage.textContent = 'Редактор готов к работе.';
+            statusMessage.classList.remove('text-yellow-500');
+            statusMessage.classList.add('text-success');
+
+            // Обработчик для закрытия модального окна по клику вне его (фон)
+            aiModal.addEventListener('click', (e) => {
+                if (e.target === aiModal) {
+                    closeAiModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

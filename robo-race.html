@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Робо-Гонки: Исправлено и Работает</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .programming-block { 
+            cursor: pointer; 
+            user-select: none; 
+            transition: all 0.1s; 
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+        }
+        .programming-block:hover { transform: translateX(5px); box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+        .programming-block:active { transform: scale(0.98); }
+        
+        #code-display { font-family: 'Roboto Mono', monospace; line-height: 1.5; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col">
+
+    <div class="max-w-7xl mx-auto w-full p-4 flex-grow flex flex-col gap-4">
+        
+        <header class="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
+            <a href="index.html" class="flex-shrink-0 text-2xl font-extrabold flex items-center">
+                <img src="logo.svg" alt="Логотип Adele Labs" class="h-8">
+            </a>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <div class="text-xs text-gray-500">Время круга</div>
+                    <div id="timer" class="font-mono text-xl font-bold text-indigo-600">0.000</div>
+                </div>
+                <button id="run-btn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow transition">
+                    ▶ ЗАПУСК
+                </button>
+                <button id="reset-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold shadow transition">
+                    🔄 СБРОС
+                </button>
+            </div>
+        </header>
+
+        <div class="grid lg:grid-cols-12 gap-6 flex-grow">
+            
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                <div id="robot-track-container" class="relative bg-gray-200 rounded-xl shadow-inner border-2 border-gray-300 flex-grow min-h-[400px]">
+                    <canvas id="robot-canvas" class="w-full h-full block rounded-xl"></canvas>
+                    <div id="status-overlay" class="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded text-xs font-mono hidden"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-700 mb-3 text-sm uppercase tracking-wide">Блоки Команд</h3>
+                    <div class="grid grid-cols-1 gap-2">
+                        <div class="programming-block bg-orange-100 text-orange-800 border border-orange-200 p-2 rounded" 
+                             onclick="addBlock('start', '// --- НАЧАЛО ПРОГРАММЫ ---')">
+                            ▶ СТАРТ
+                        </div>
+
+                        <div class="programming-block bg-blue-100 text-blue-800 border border-blue-200 p-2 rounded" 
+                             onclick="addBlock('if', 'if (!L) {')">
+                            ❓ ЕСЛИ (Слева Белый)
+                        </div>
+                        <div class="programming-block bg-blue-100 text-blue-800 border border-blue-200 p-2 rounded" 
+                             onclick="addBlock('elseif', '} else if (!R) {')">
+                            ❓ ИНАЧЕ ЕСЛИ (Справа Белый)
+                        </div>
+                        <div class="programming-block bg-blue-100 text-blue-800 border border-blue-200 p-2 rounded" 
+                             onclick="addBlock('else', '} else {')">
+                            ❓ ИНАЧЕ (Остальные случаи)
+                        </div>
+
+                        <div class="programming-block bg-green-100 text-green-800 border border-green-200 p-2 rounded" 
+                             onclick="addBlock('action', 'return { l: 100, r: 30 }; // Вправо')">
+                            ⚡ Поворот ВПРАВО
+                        </div>
+                        <div class="programming-block bg-green-100 text-green-800 border border-green-200 p-2 rounded" 
+                             onclick="addBlock('action', 'return { l: 30, r: 100 }; // Влево')">
+                            ⚡ Поворот ВЛЕВО
+                        </div>
+                        <div class="programming-block bg-green-100 text-green-800 border border-green-200 p-2 rounded" 
+                             onclick="addBlock('action', 'return { l: 80, r: 80 }; // Прямо')">
+                            ⚡ Ехать ПРЯМО
+                        </div>
+
+                        <div class="programming-block bg-orange-100 text-orange-800 border border-orange-200 p-2 rounded" 
+                             onclick="addBlock('end', '}')">
+                            ⏹ КОНЕЦ
+                        </div>
+                        
+                        <div class="border-t pt-2 mt-2">
+                            <button onclick="clearCode()" class="w-full text-xs text-red-500 hover:text-red-700 font-bold py-1">
+                                🗑 ОЧИСТИТЬ ВСЁ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900 rounded-xl shadow-lg flex flex-col flex-grow overflow-hidden">
+                    <div class="bg-gray-800 px-4 py-2 text-xs text-gray-400 flex justify-between">
+                        <span>main.js</span>
+                        <span id="syntax-status" class="text-green-400">OK</span>
+                    </div>
+                    <pre id="code-display" class="p-4 text-xs md:text-sm text-gray-300 overflow-auto h-full"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === 1. ЯДРО ГЕНЕРАЦИИ КОДА ===
+        let blocks = [];
+        let robotFunction = null;
+
+        // Инициализация при загрузке
+        window.onload = function() {
+            // Загружаем рабочий алгоритм по умолчанию
+            blocks = [
+                { type: 'start', code: '// Старт алгоритма' },
+                { type: 'if', code: 'if (!L) {' },
+                { type: 'action', code: '  return { l: 100, r: 20 };' },
+                { type: 'elseif', code: '} else if (!R) {' },
+                { type: 'action', code: '  return { l: 20, r: 100 };' },
+                { type: 'else', code: '} else {' },
+                { type: 'action', code: '  return { l: 80, r: 80 };' },
+                { type: 'end', code: '}' }
+            ];
+            renderCode();
+            initSimulation();
+        };
+
+        function addBlock(type, code) {
+            blocks.push({ type, code });
+            renderCode();
+        }
+
+        function clearCode() {
+            blocks = [];
+            renderCode();
+        }
+
+        function renderCode() {
+            const display = document.getElementById('code-display');
+            const statusLabel = document.getElementById('syntax-status');
+            
+            // Собираем чистый JS код из блоков
+            let fullCode = blocks.map(b => b.code).join('\n');
+            
+            // Отображаем
+            display.textContent = fullCode;
+
+            try {
+                // ВАЖНО: Мы создаем функцию, телом которой является fullCode.
+                // Аргументы L, C, R будут доступны внутри этого кода.
+                // eslint-disable-next-line no-new-func
+                robotFunction = new Function('L', 'C', 'R', fullCode);
+                
+                statusLabel.textContent = "СИНТАКСИС: OK";
+                statusLabel.className = "text-green-400";
+                
+                // Тестовый запуск (проверка на runtime ошибки)
+                robotFunction(false, true, false); 
+            } catch (e) {
+                robotFunction = null;
+                statusLabel.textContent = "ОШИБКА: " + e.message;
+                statusLabel.className = "text-red-400 font-bold";
+            }
+        }
+
+        // === 2. ФИЗИКА И КАНВАС ===
+        const canvas = document.getElementById('robot-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let robot = { x: 0, y: 0, angle: 0 };
+        let track = { cx: 0, cy: 0, r: 0, width: 30 };
+        
+        let isRunning = false;
+        let animationFrame;
+        let startTime = 0;
+
+        function initSimulation() {
+            resizeCanvas();
+            resetRobot();
+            draw();
+            window.addEventListener('resize', () => { resizeCanvas(); draw(); });
+        }
+
+        function resizeCanvas() {
+            const container = document.getElementById('robot-track-container');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            
+            track.cx = canvas.width / 2;
+            track.cy = canvas.height / 2;
+            track.r = Math.min(track.cx, track.cy) - 50;
+        }
+
+        function resetRobot() {
+            // Ставим робота на верхнюю точку круга
+            robot.x = track.cx;
+            robot.y = track.cy - track.r;
+            robot.angle = 0; // Направлен вправо (0 радиан)
+            
+            // Если трасса круглая, касательная сверху направлена горизонтально
+            // 0 радиан в canvas обычно вправо.
+            
+            isRunning = false;
+            cancelAnimationFrame(animationFrame);
+            document.getElementById('timer').textContent = "0.000";
+            document.getElementById('run-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+            draw();
+        }
+
+        // Получение данных сенсоров в мировых координатах
+        function getSensors() {
+            const sensorDist = 15; // от центра робота вперед
+            const sensorWidth = 10; // расстояние между левым и правым
+            
+            // Координаты относительно центра робота
+            const sensorsRel = [
+                { x: sensorDist, y: -sensorWidth }, // Левый (Left)
+                { x: sensorDist, y: 0 },            // Центр (Center)
+                { x: sensorDist, y: sensorWidth }   // Правый (Right)
+            ];
+
+            return sensorsRel.map(s => {
+                // Поворот + Перенос
+                const wx = robot.x + s.x * Math.cos(robot.angle) - s.y * Math.sin(robot.angle);
+                const wy = robot.y + s.x * Math.sin(robot.angle) + s.y * Math.cos(robot.angle);
+                
+                // Проверка цвета (дистанция до центра трассы)
+                const distToCenter = Math.sqrt((wx - track.cx)**2 + (wy - track.cy)**2);
+                const onLine = Math.abs(distToCenter - track.r) < (track.width / 2);
+                
+                return { x: wx, y: wy, val: onLine }; // true = Black (на линии)
+            });
+        }
+
+        function update() {
+            if (!isRunning) return;
+
+            const sensors = getSensors();
+            // Логика: true = черный, false = белый
+            const L = sensors[0].val; 
+            const C = sensors[1].val;
+            const R = sensors[2].val;
+
+            let speedL = 0, speedR = 0;
+
+            if (robotFunction) {
+                try {
+                    const res = robotFunction(L, C, R);
+                    if (res) {
+                        speedL = res.l || 0;
+                        speedR = res.r || 0;
+                    }
+                } catch (e) {
+                    console.error("Runtime error:", e);
+                    isRunning = false;
+                    alert("Ошибка во время выполнения кода: " + e.message);
+                    return;
+                }
+            }
+
+            // Физика движения
+            const maxSpeed = 3; // пикс/фрейм
+            const vL = (speedL / 100) * maxSpeed;
+            const vR = (speedR / 100) * maxSpeed;
+
+            const v = (vL + vR) / 2;
+            const omega = (vR - vL) / 20; // 20 - условная ширина базы
+
+            robot.x += v * Math.cos(robot.angle);
+            robot.y += v * Math.sin(robot.angle);
+            robot.angle += omega;
+
+            // Таймер
+            const t = (performance.now() - startTime) / 1000;
+            document.getElementById('timer').textContent = t.toFixed(3);
+
+            draw();
+            animationFrame = requestAnimationFrame(update);
+        }
+
+        function draw() {
+            // Очистка
+            ctx.fillStyle = "#e5e7eb";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Трасса
+            ctx.beginPath();
+            ctx.arc(track.cx, track.cy, track.r, 0, Math.PI * 2);
+            ctx.lineWidth = track.width;
+            ctx.strokeStyle = "#374151";
+            ctx.stroke();
+
+            // Робот
+            ctx.save();
+            ctx.translate(robot.x, robot.y);
+            ctx.rotate(robot.angle);
+            
+            // Корпус
+            ctx.fillStyle = "#ef4444";
+            ctx.shadowColor = "rgba(0,0,0,0.3)";
+            ctx.shadowBlur = 5;
+            ctx.fillRect(-10, -10, 20, 20);
+            
+            // Направление
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(0, -2, 10, 4);
+            
+            ctx.restore();
+
+            // Сенсоры (отладка)
+            const sensors = getSensors();
+            sensors.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, 3, 0, Math.PI*2);
+                ctx.fillStyle = s.val ? "black" : "white"; // Черный если на линии
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+                ctx.fill();
+            });
+        }
+
+        // Управление кнопками
+        document.getElementById('run-btn').addEventListener('click', () => {
+            if (!robotFunction) {
+                alert("Сначала соберите корректную программу!");
+                return;
+            }
+            if (isRunning) return;
+            
+            isRunning = true;
+            startTime = performance.now();
+            update();
+            
+            document.getElementById('run-btn').classList.add('opacity-50', 'cursor-not-allowed');
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', resetRobot);
+
+    </script>
+</body>
+</html>

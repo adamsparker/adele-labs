@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн HTML/JS Редактор</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@400&display=swap');
+        
+        /* Убедимся, что body занимает всю высоту для корректной работы vh */
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* --- СТИЛИ ДЛЯ РЕДАКТОРА (TEXTAREA) --- */
+        
+        /* Общие стили для TEXTAREA */
+        #code-editor {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 1rem; /* Соответствует p-4 */
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            box-sizing: border-box;
+            
+            /* Стили, возвращающие обычный редактор */
+            color: #f8fafc; /* Белый текст */
+            background-color: #1e293b; /* Темный фон */
+            
+            resize: none;
+            overflow: auto;
+            border: none;
+            outline: none;
+            border-radius: 0.5rem;
+        }
+
+        /* --- СТИЛИ ЛЕЙАУТА --- */
+        
+        #preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background-color: white;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+        
+        .editor-panel, .preview-panel {
+            height: 50vh;
+        }
+
+        .editor-panel {
+            border-radius: 0.5rem;
+        }
+        
+        /* --- СТИЛИ ПОЛНОЭКРАННОГО РЕЖИМА --- */
+        .preview-panel.fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh !important; /* Перекрываем все остальные стили высоты */
+            z-index: 50; /* z-index, чтобы быть поверх всего */
+            padding-top: 64px; /* Отступ для панели управления */
+            background-color: white;
+            flex-direction: column;
+            display: flex; /* Гарантируем flex-контейнер */
+        }
+
+        .preview-panel.fullscreen #preview-iframe {
+            height: 100%;
+        }
+
+        /* Скрытие редактора в полноэкранном режиме */
+        .fullscreen-active .editor-panel {
+            display: none;
+        }
+        
+        /* Адаптивность для десктопа */
+        @media (min-width: 768px) {
+            .main-container {
+                grid-template-columns: repeat(2, 1fr);
+                height: calc(100vh - 64px); 
+            }
+            .editor-panel, .preview-panel {
+                height: 100%;
+            }
+            .preview-panel.fullscreen {
+                padding-top: 0; /* На десктопе можем не использовать отступ, если скрываем заголовок */
+            }
+        }
+        
+        /* Стили для кнопки полноэкранного режима */
+        .fullscreen-btn {
+            @apply text-gray-500 hover:text-blue-600 transition duration-150 p-2 rounded-full;
+        }
+        
+        /* --- СТИЛИ МОДАЛЬНОГО ОКНА --- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Выше чем все */
+        }
+
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'editor-bg': '#1e293b',
+                        'editor-text': '#f8fafc',
+                        'run-btn': '#059669',
+                        'run-btn-hover': '#047857',
+                        'save-btn': '#3b82f6',
+                        'save-btn-hover': '#2563eb',
+                        'home-btn': '#f97316',
+                        'home-btn-hover': '#ea580c',
+                        'full-btn': '#10b981', 
+                        'full-btn-hover': '#059669',
+                        // Новый цвет для кнопки AI
+                        'ai-btn': '#8b5cf6', // Фиолетовый
+                        'ai-btn-hover': '#7c3aed',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="text-gray-800">
+
+    <header id="app-header" class="bg-white shadow-md h-16 flex items-center justify-between px-4 md:px-8 sticky top-0 z-10">
+        <a href="index.html" class="flex-shrink-0 text-2xl font-extrabold flex items-center">
+            <img src="logo.svg" alt="Логотип Adele Labs" class="h-8">
+        </a>
+        <div class="flex items-center space-x-2 sm:space-x-4">
+            <button id="ai-btn" onclick="openAiModal()" class="bg-ai-btn text-white font-semibold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg shadow-lg hover:bg-ai-btn-hover transition duration-200 flex items-center space-x-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M16 12h-1m.707 6.364l-.707-.707M9 12H4m1.636 6.364l.707-.707M12 21v-1m-4.636-1.636l-.707.707M4 12h1m-.707-6.364l.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>AI Помощник</span>
+            </button>
+            <a href="index.html" onclick="goToHome()" class="bg-home-btn text-white font-semibold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg shadow-lg hover:bg-home-btn-hover transition duration-200">
+                Главная
+            </a>
+            <button id="save-btn" onclick="saveCode()" class="bg-save-btn text-white font-semibold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg shadow-lg hover:bg-save-btn-hover transition duration-200">
+                Сохранить Код
+            </button>
+        </div>
+    </header>
+
+    <main class="main-container" id="main-container">
+
+        <div class="editor-panel flex flex-col bg-editor-bg p-2 md:p-4 border-r border-gray-700">
+            <h2 class="text-lg font-semibold mb-2 text-editor-text">Редактор</h2>
+            <div class="flex-grow">
+                <textarea id="code-editor" class="resize-none" spellcheck="false"></textarea>
+            </div>
+        </div>
+
+        <div class="preview-panel flex flex-col p-0 overflow-hidden bg-white" id="preview-panel">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50" id="preview-header">
+                <h2 class="text-lg font-semibold">Предпросмотр</h2>
+                
+                <button id="fullscreen-btn" onclick="toggleFullscreen()" title="Полноэкранный режим" class="bg-full-btn text-white font-semibold py-1 px-2 text-sm sm:py-2 sm:px-4 sm:text-base rounded-lg shadow-lg hover:bg-full-btn-hover transition duration-200 flex items-center space-x-1">
+                    <svg id="enter-full" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M4 8V4H8M4 4L9 9M16 4H20V8M20 4L15 9M20 16V20H16M20 20L15 15M8 20H4V16M4 20L9 15">
+                        </path>
+                    </svg>
+                    
+                    <svg id="exit-full" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 9L4 4M4 9h5V4M15 9L20 4M15 4h5v5M15 15L20 20M20 15v5h-5M9 15L4 20M9 20H4v-5">
+                        </path>
+                    </svg>
+                    <span id="fullscreen-text" class="hidden sm:inline">Полный экран</span>
+                </button>
+            </div>
+            
+            <div class="flex-grow overflow-hidden">
+                <iframe id="preview-iframe" title="Code Preview"></iframe>
+            </div>
+        </div>
+    </main>
+    
+    <div id="ai-modal" class="modal hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-11/12 p-6 md:p-8">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+                    <svg class="w-6 h-6 text-ai-btn" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M16 12h-1m.707 6.364l-.707-.707M9 12H4m1.636 6.364l.707-.707M12 21v-1m-4.636-1.636l-.707.707M4 12h1m-.707-6.364l.707.707M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>AI Помощник для Кода</span>
+                </h3>
+                <button onclick="closeAiModal()" class="text-gray-500 hover:text-gray-900 transition duration-150">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <p class="mb-6 text-gray-600">
+                Используйте эти сторонние нейросети для генерации, оптимизации или исправления кода. 
+            </p>
+
+            <ul class="space-y-3">
+                <li>
+                    <a href="https://chat.qwen.ai/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>Qwen (Alibaba)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.deepseek.com/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>DeepSeek</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://giga.chat/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>GigaChat (Сбер)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://alice.yandex.ru/" target="_blank" class="text-lg font-semibold text-blue-600 hover:text-blue-800 transition duration-200 flex items-center space-x-2">
+                        <span>Алиса (Яндекс)</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-7-3l-4 4M17 10l-4 4m6-6l-4 4"></path></svg>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('code-editor');
+        const iframe = document.getElementById('preview-iframe');
+        const previewPanel = document.getElementById('preview-panel');
+        const appHeader = document.getElementById('app-header');
+        const mainContainer = document.getElementById('main-container');
+        const enterFullIcon = document.getElementById('enter-full');
+        const exitFullIcon = document.getElementById('exit-full');
+        const fullscreenText = document.getElementById('fullscreen-text');
+        // Элемент модального окна
+        const aiModal = document.getElementById('ai-modal'); 
+
+        // Используем localStorage для сохранения кода
+        const STORAGE_KEY = 'htmlEditorCode'; 
+
+        // --- ЛОГИКА МОДАЛЬНОГО ОКНА ---
+        function openAiModal() {
+            aiModal.classList.remove('hidden');
+        }
+
+        function closeAiModal() {
+            aiModal.classList.add('hidden');
+        }
+
+        // --- ЛОГИКА СОХРАНЕНИЯ / ЗАПУСКА ---
+
+        function saveCode() {
+            try {
+                localStorage.setItem(STORAGE_KEY, editor.value);
+                console.log('Код успешно сохранен локально.');
+            } catch (e) {
+                console.error('Ошибка при сохранении кода:', e);
+            }
+        }
+        
+        function loadCode() {
+            const savedCode = localStorage.getItem(STORAGE_KEY);
+            if (savedCode) {
+                editor.value = savedCode;
+                console.log('Сохраненный код загружен.');
+                return true;
+            }
+            return false;
+        }
+
+        function runCode() {
+            const code = editor.value;
+            
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+            // Загрузка кода в iframe
+            iframeDoc.open();
+            iframeDoc.write(code);
+            iframeDoc.close();
+            
+            // Сохраняем код после запуска
+            saveCode(); 
+        }
+
+        function goToHome() {
+            // В зависимости от того, что вы хотите делать - просто перезагрузить или перейти на главную страницу
+            // window.location.href = 'index.html'; 
+            window.location.reload(); 
+        }
+
+        // --- ЛОГИКА ПОЛНОЭКРАННОГО РЕЖИМА ---
+        function toggleFullscreen() {
+            const isFullscreen = previewPanel.classList.toggle('fullscreen');
+            
+            // Управление видимостью кнопок/иконок
+            enterFullIcon.classList.toggle('hidden', isFullscreen);
+            exitFullIcon.classList.toggle('hidden', !isFullscreen);
+            fullscreenText.textContent = isFullscreen ? 'Выход' : 'Полный экран';
+
+            // Переключаем класс на <body> или главном контейнере, чтобы скрыть редактор
+            document.body.classList.toggle('fullscreen-active', isFullscreen);
+            appHeader.classList.toggle('hidden', isFullscreen); // Скрываем основной заголовок
+
+            // Перезапускаем код, чтобы, если в коде используются Vh/Vw, он корректно перестроился
+            runCode();
+        }
+
+        // --- ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ СОБЫТИЙ ---
+
+        window.onload = function() {
+            // Загрузка кода (либо сохраненного, либо пустого)
+            loadCode();
+            
+            // Инициализация предпросмотра
+            runCode();
+
+            // Обработчик ввода для режима "реального времени"
+            editor.addEventListener('input', () => {
+                runCode();
+            });
+
+            // Обработка Ctrl+Enter (или Cmd+Enter)
+            editor.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    runCode();
+                }
+            });
+            
+            // Установка высоты редактора
+            editor.style.height = '100%'; 
+            
+            // Обработчик для закрытия модального окна по клику вне его (фон)
+            aiModal.addEventListener('click', (e) => {
+                if (e.target === aiModal) {
+                    closeAiModal();
+                }
+            });
+        };
+    </script>
+</body>
+</html>
