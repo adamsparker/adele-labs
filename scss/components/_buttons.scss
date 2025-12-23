@@ -1,0 +1,132 @@
+// Button styles
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  font-family: $font-primary;
+  
+  &--primary {
+    background-color: $primary;
+    color: white;
+    padding: $spacing-sm $spacing-lg;
+    box-shadow: 0 4px 6px rgba($primary, 0.1);
+    
+    &:hover {
+      background-color: $secondary;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba($primary, 0.15);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  &--secondary {
+    background-color: $light;
+    color: $primary;
+    padding: $spacing-sm $spacing-lg;
+    border: 2px solid $border;
+    
+    &:hover {
+      background-color: $brand-light;
+      border-color: $primary;
+    }
+  }
+  
+  &--accent {
+    background-color: $accent;
+    color: white;
+    padding: $spacing-sm $spacing-lg;
+    box-shadow: 0 4px 6px rgba($accent, 0.1);
+    
+    &:hover {
+      background-color: $ai-btn-hover;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba($accent, 0.15);
+    }
+  }
+  
+  &--outline {
+    background-color: transparent;
+    color: $primary;
+    border: 2px solid $primary;
+    padding: $spacing-sm $spacing-lg;
+    
+    &:hover {
+      background-color: $primary;
+      color: white;
+    }
+  }
+  
+  &--icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+  
+  &--lg {
+    padding: $spacing-md $spacing-xl;
+    font-size: 1.1rem;
+  }
+  
+  &--sm {
+    padding: $spacing-xs $spacing-sm;
+    font-size: 0.9rem;
+  }
+  
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    
+    &:hover {
+      transform: none;
+      background-color: $primary;
+    }
+  }
+  
+  // Button with loading state
+  &--loading {
+    &::after {
+      content: '';
+      width: 16px;
+      height: 16px;
+      margin-left: $spacing-sm;
+      border: 2px solid transparent;
+      border-top: 2px solid currentColor;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Button group
+.btn-group {
+  display: flex;
+  gap: $spacing-sm;
+  
+  &--vertical {
+    flex-direction: column;
+  }
+}

@@ -4,35 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Adele Labs</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb; /* Очень светлый фон */
-        }
-        /* Стили для модального окна (убедимся, что оно выше всего) */
-        .modal-overlay {
-            z-index: 1000;
-        }
-    </style>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-dark': '#1f2937', // Основной текст
-                        'brand-primary': '#04412B', // Основной акцент (Темно-зеленый)
-                        'brand-light': '#EDFAEC', // Светлый акцент/фон (Светло-зеленый)
-                        'cta-accent': '#04412B', // CTA-цвет (Совпадает с основным)
-                        'brand-hover': '#1A6348', // Цвет при наведении для темных кнопок
-                    },
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="css/main.css">
 </head>
-<body class="text-primary-dark">
+<body class="text-gray-800">
 
     <div id="levels-modal" class="modal-overlay hidden fixed inset-0 bg-gray-900 bg-opacity-95 overflow-y-auto">
         <div class="max-w-md sm:max-w-4xl mx-auto my-8 sm:my-12 p-6 sm:p-10 bg-white rounded-3xl shadow-2xl relative transform scale-95 transition-all duration-300">

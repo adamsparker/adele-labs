@@ -1,0 +1,77 @@
+// Grid layout styles
+.grid {
+  display: grid;
+  gap: $spacing-lg;
+  
+  &--2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  &--3 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  
+  &--4 {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  @media (min-width: $breakpoint-md) {
+    &--2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    &--3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    &--4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
+// Section styles
+.section {
+  padding: $spacing-2xl $spacing-md;
+  
+  &--light {
+    background-color: $light;
+  }
+  
+  &--dark {
+    background-color: $dark;
+    color: white;
+  }
+  
+  &--accent {
+    background-color: $brand-light;
+  }
+  
+  &__title {
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: $spacing-lg;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background-color: $primary;
+      border-radius: 2px;
+    }
+  }
+  
+  &__subtitle {
+    font-size: 1.1rem;
+    text-align: center;
+    color: $text-secondary;
+    max-width: 600px;
+    margin: 0 auto $spacing-xl;
+  }
+}

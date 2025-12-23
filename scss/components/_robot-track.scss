@@ -1,0 +1,112 @@
+// Robot track styles
+.robot-track {
+  position: relative;
+  background-color: $light;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px $shadow;
+  
+  &__container {
+    position: relative;
+    background-color: #e5e7eb;
+    border-radius: 16px;
+    border: 2px solid $border;
+    flex-grow: 1;
+    min-height: 400px;
+  }
+  
+  &__canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 16px;
+  }
+  
+  &__overlay {
+    position: absolute;
+    top: $spacing-md;
+    left: $spacing-md;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: $spacing-sm;
+    border-radius: 8px;
+    font-family: $font-mono;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+  
+  &__timer {
+    font-family: $font-mono;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4f46e5;
+  }
+}
+
+// Programming blocks
+.programming-block {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.1s ease;
+  font-family: $font-mono;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: $spacing-md;
+  text-align: center;
+  font-weight: 500;
+  
+  &:hover {
+    transform: translateX(5px);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  &--start {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 2px solid #fbbf24;
+  }
+  
+  &--condition {
+    background-color: #dbeafe;
+    color: #2563eb;
+    border: 2px solid #93c5fd;
+  }
+  
+  &--action {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border: 2px solid #86efac;
+  }
+  
+  &--end {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 2px solid #fca5a5;
+  }
+}
+
+// Code display area
+.code-display {
+  background-color: #1f2937;
+  color: #d1d5db;
+  font-family: $font-mono;
+  padding: $spacing-md;
+  border-radius: 8px;
+  overflow: auto;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  
+  &__header {
+    background-color: #111827;
+    padding: $spacing-sm $spacing-md;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #9ca3af;
+  }
+}

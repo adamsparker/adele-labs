@@ -1,0 +1,74 @@
+// Base styles
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-primary;
+  background-color: $light;
+  color: $text-primary;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: $spacing-md;
+}
+
+p {
+  margin-bottom: $spacing-md;
+}
+
+a {
+  text-decoration: none;
+  color: $primary;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: $secondary;
+  }
+}
+
+ul, ol {
+  margin: $spacing-md 0;
+  padding-left: $spacing-lg;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 $spacing-md;
+  
+  @media (min-width: $breakpoint-lg) {
+    padding: 0 $spacing-lg;
+  }
+}
+
+// Modern scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $light;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border;
+  border-radius: 4px;
+  
+  &:hover {
+    background: $text-secondary;
+  }
+}
